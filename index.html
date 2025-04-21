@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Data with Cards</title>
     <style>
-
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -120,9 +119,6 @@
             margin-left: 5px;
             font-size: 16px;
         }
-
-
-
     </style>
 </head>
 <body>
@@ -210,83 +206,49 @@
             document.getElementById('secondStatArrow').textContent = sortedBySecondStatAsc ? '↑' : '↓';
             renderCards(playersData);
         }
-        function checkFAPlayers() {
-            const missingFAPlayers = faPlayers.filter(faPlayer => {
-                return !playersData.some(player => player.player === faPlayer);
-            });
 
-            if (missingFAPlayers.length > 0) {
-                console.log("누락된 FA 선수:", missingFAPlayers.join(", "));
-            } else {
-                console.log("모든 FA 선수가 파일에 존재합니다.");
+        // 필터링 함수
+        function filterData() {
+            const teamFilterValue = document.getElementById('teamFilter').value;
+            const clusterFilterValue = document.getElementById('clusterFilter').value;
+    
+            // 필터링된 데이터 계산
+            let filteredData = playersData;
+            
+            // FA 필터가 활성화된 경우 FA 선수들만 필터링
+            if (faFilterActive) {
+                filteredData = filteredData.filter(player => faPlayers.includes(player.player));
             }
-        }
-        // CSV 파일을 로드하여 HTML 카드 형식으로 표시하는 함수
-        function loadCSV() {
-            fetch('merged_data_full.csv')  // CSV 파일 경로
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data);  // 데이터를 제대로 읽어오는지 확인
-                    const rows = data.split('\n');
-                    const tableBody = document.getElementById('cardsContainer');
-    
-                    // CSV 데이터를 배열로 저장, 빈 행을 제외하고 유효한 데이터만 처리
-                    playersData = rows.slice(1).filter(row => row.trim() !== "").map(row => {
-                        const columns = row.split(',');
-    
-                        // 각 열이 충분히 있는지 확인하고, 필요한 데이터를 잘라냄
-                        if (columns.length >= 6) {
-                            return {
-                                player: columns[0].trim(),
-                                team: columns[1].trim(),
-                                efficiency: parseFloat(columns[2].trim()) || 0, // 숫자로 변환
-                                secondStat: parseFloat(columns[3].trim()) || 0, // 숫자로 변환
-                                cluster: parseInt(columns[4].trim(), 10), // 클러스터 값 변환
-                                clusterName: clusterNames[parseInt(columns[4].trim(), 10)] || 'Unknown', // 클러스터 이름 설정
-                                image: columns[5].trim() || defaultImage, // 이미지 링크가 없으면 디폴트 이미지로 처리
-                            };
-                        }
-                        return null;  // 만약 유효하지 않은 데이터가 있다면 null로 처리
-                    }).filter(player => player !== null);  // null 값을 제외
-    
-                    console.log(playersData);  // 데이터 확인
-                    // 카드에 데이터 추가
-                    renderCards(playersData);
-                    checkFAPlayers();
-                    // 누락된 선수 처리
-                    handleMissingPlayers();
-                    // 필터 옵션 업데이트
-                    updateFilters(playersData);
-                })
-                .catch(error => console.error('Error loading CSV:', error));
-        }
-        function handleMissingPlayers() {
-            missingPlayers.forEach(player => {
-                // 누락된 선수는 기본값으로 처리
-                if (!playersData.some(p => p.player === player)) {
-                    console.log(`누락된 선수: ${player}`);
 
-                    // 기본값으로 데이터를 추가
-                    playersData.push({
-                        player: player,
-                        team: '-',
-                        efficiency: '0',
-                        secondStat: '0',
-                        cluster: '-',
-                        clusterName: '-',
-                        image: defaultImage
-                    });
-                }
-            });
+            // 팀 필터와 클러스터 필터 적용
+            if (teamFilterValue) {
+                filteredData = filteredData.filter(player => player.team === teamFilterValue);
+            }
+
+            if (clusterFilterValue) {
+                filteredData = filteredData.filter(player => player.clusterName === clusterFilterValue);
+            }
+
+            // 필터링된 데이터로 카드 렌더링
+            renderCards(filteredData);
         }
+
+        // FA 필터 활성화/비활성화
+        document.getElementById('faFilterCheckbox').addEventListener('change', function() {
+            faFilterActive = this.checked;
+            filterData();  // FA 필터 적용 후 카드 렌더링
+        });
+
+        // 필터 변경 시 카드 갱신
+        document.getElementById('teamFilter').addEventListener('change', filterData);
+        document.getElementById('clusterFilter').addEventListener('change', filterData);
+
         // 카드 렌더링 함수
         function renderCards(data) {
             const cardsContainer = document.getElementById('cardsContainer');
             cardsContainer.innerHTML = '';  // 기존 카드 내용 지우기
     
-            const filteredData = faFilterActive ? data.filter(player => faPlayers.includes(player.player)) : data;
-    
-            filteredData.forEach(player => {
+            data.forEach(player => {
                 const card = document.createElement('div');
                 card.classList.add('card');
     
@@ -319,63 +281,38 @@
                 cardsContainer.appendChild(card);
             });
         }
-    
-        // 필터 드롭다운을 업데이트하는 함수
-        function updateFilters(data) {
-            const teamSelect = document.getElementById('teamFilter');
-            const clusterSelect = document.getElementById('clusterFilter');
-    
-            // 팀 필터 옵션 추가
-            const teams = [...new Set(data.map(player => player.team))];
-            teams.forEach(team => {
-                const option = document.createElement('option');
-                option.value = team;
-                option.textContent = team;
-                teamSelect.appendChild(option);
-            });
-    
-            // 클러스터 필터 옵션 추가
-            const clusters = [...new Set(data.map(player => player.clusterName))];
-            clusters.forEach(cluster => {
-                const option = document.createElement('option');
-                option.value = cluster;
-                option.textContent = cluster;
-                clusterSelect.appendChild(option);
-            });
+
+        // CSV 파일을 로드하여 HTML 카드 형식으로 표시하는 함수
+        function loadCSV() {
+            fetch('merged_data_full.csv')  // CSV 파일 경로
+                .then(response => response.text())
+                .then(data => {
+                    const rows = data.split('\n');
+                    playersData = rows.slice(1).filter(row => row.trim() !== "").map(row => {
+                        const columns = row.split(',');
+                        if (columns.length >= 6) {
+                            return {
+                                player: columns[0].trim(),
+                                team: columns[1].trim(),
+                                efficiency: parseFloat(columns[2].trim()) || 0,
+                                secondStat: parseFloat(columns[3].trim()) || 0,
+                                cluster: parseInt(columns[4].trim(), 10),
+                                clusterName: clusterNames[parseInt(columns[4].trim(), 10)] || 'Unknown',
+                                image: columns[5].trim() || defaultImage, 
+                            };
+                        }
+                        return null;
+                    }).filter(player => player !== null);  // null 값 제외
+                    renderCards(playersData);
+                    updateFilters(playersData);
+                })
+                .catch(error => console.error('Error loading CSV:', error));
         }
-    
-        // 필터링 함수
-        function filterData() {
-            const teamFilterValue = document.getElementById('teamFilter').value;
-            const clusterFilterValue = document.getElementById('clusterFilter').value;
-    
-            // 필터링된 데이터 계산
-            const filteredData = playersData.filter(player => {
-                const teamMatch = teamFilterValue ? player.team === teamFilterValue : true;
-                const clusterMatch = clusterFilterValue ? player.clusterName === clusterFilterValue : true;
-                return teamMatch && clusterMatch;
-            });
-    
-            renderCards(filteredData);
-        }
-    
-        // FA 필터 활성화/비활성화
-        document.getElementById('faFilterCheckbox').addEventListener('change', function() {
-            faFilterActive = this.checked;
-            renderCards(playersData);
-        });
-    
-        // 필터 변경 시 카드 갱신
-        document.getElementById('teamFilter').addEventListener('change', filterData);
-        document.getElementById('clusterFilter').addEventListener('change', filterData);
-        document.getElementById('sortByEfficiency').addEventListener('click', sortByEfficiency);
-        document.getElementById('sortBySecondStat').addEventListener('click', sortBySecondStat);
     
         // 페이지가 로드되면 CSV 파일을 로드하고 카드로 표시
         window.onload = function() {
             loadCSV();
         };
     </script>
-    
 </body>
 </html>
