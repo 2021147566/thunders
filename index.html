@@ -164,21 +164,12 @@
             "김진모", "함지훈", "장재석", "서명진", "김지완", "한호빈", "김국찬", "김현민", "전준우", 
             "박상우"
         ];
-        const goldenGlowPlayers = [
-            "이정현", "김선형", "오재현", "허훈", "한희원", "김낙현", "함지훈", "장재석", "서명진"
-        ];
-        const missingPlayers = [
-        "김진용", "김근현", "함준후", "유진", "김지후", "박민우", "한상혁", "박준형", "이승훈", 
-        "장태빈", "이우정", "전태영", "이윤기", "이호준", "박선웅", "이두호", "김철욱", "조상열", 
-        "이도헌", "김진모", "김지완", "김현민", "전준우", "박상우"
-        ];
-        // FA 필터 상태 (default: 모두 보기)
-        let faFilterActive = false;
-    
+
+        let faFilterActive = false; // FA 필터 상태
         let sortedByEfficiencyAsc = true; // 효율성 정렬 여부
         let sortedBySecondStatAsc = true; // 2nd Stat 정렬 여부
         const defaultImage = 'profile.png'; // 업로드된 디폴트 이미지 경로
-    
+
         // 클러스터 값에 대한 이름 매핑
         const clusterNames = {
             0: 'Floor General',
@@ -188,99 +179,6 @@
             4: 'Flexible Wing Player',
             5: 'Ball Dominant Handler'
         };
-    
-        // 효율성 기준 정렬 함수
-        function sortByEfficiency() {
-            playersData.sort((a, b) => sortedByEfficiencyAsc ? a.efficiency - b.efficiency : b.efficiency - a.efficiency);
-            sortedByEfficiencyAsc = !sortedByEfficiencyAsc; // 정렬 방향 변경
-            // 화살표 변경
-            document.getElementById('efficiencyArrow').textContent = sortedByEfficiencyAsc ? '↑' : '↓';
-            renderCards(playersData);
-        }
-    
-        // 2nd Stat 기준 정렬 함수
-        function sortBySecondStat() {
-            playersData.sort((a, b) => sortedBySecondStatAsc ? a.secondStat - b.secondStat : b.secondStat - a.secondStat);
-            sortedBySecondStatAsc = !sortedBySecondStatAsc; // 정렬 방향 변경
-            // 화살표 변경
-            document.getElementById('secondStatArrow').textContent = sortedBySecondStatAsc ? '↑' : '↓';
-            renderCards(playersData);
-        }
-
-        // 필터링 함수
-        function filterData() {
-            const teamFilterValue = document.getElementById('teamFilter').value;
-            const clusterFilterValue = document.getElementById('clusterFilter').value;
-    
-            // 필터링된 데이터 계산
-            let filteredData = playersData;
-            
-            // FA 필터가 활성화된 경우 FA 선수들만 필터링
-            if (faFilterActive) {
-                filteredData = filteredData.filter(player => faPlayers.includes(player.player));
-            }
-
-            // 팀 필터와 클러스터 필터 적용
-            if (teamFilterValue) {
-                filteredData = filteredData.filter(player => player.team === teamFilterValue);
-            }
-
-            if (clusterFilterValue) {
-                filteredData = filteredData.filter(player => player.clusterName === clusterFilterValue);
-            }
-
-            // 필터링된 데이터로 카드 렌더링
-            renderCards(filteredData);
-        }
-
-        // FA 필터 활성화/비활성화
-        document.getElementById('faFilterCheckbox').addEventListener('change', function() {
-            faFilterActive = this.checked;
-            filterData();  // FA 필터 적용 후 카드 렌더링
-        });
-
-        // 필터 변경 시 카드 갱신
-        document.getElementById('teamFilter').addEventListener('change', filterData);
-        document.getElementById('clusterFilter').addEventListener('change', filterData);
-
-        // 카드 렌더링 함수
-        function renderCards(data) {
-            const cardsContainer = document.getElementById('cardsContainer');
-            cardsContainer.innerHTML = '';  // 기존 카드 내용 지우기
-    
-            data.forEach(player => {
-                const card = document.createElement('div');
-                card.classList.add('card');
-    
-                // FA 선수라면 카드 테두리 색상 변경
-                if (faPlayers.includes(player.player)) {
-                    card.style.border = '3px solid #0066cc';  // 파란색 테두리
-                }
-    
-                // 특정 선수들에 대해 카드 전체 배경을 황금빛으로 설정
-                const isGoldenGlow = goldenGlowPlayers.includes(player.player);
-                if (isGoldenGlow) {
-                    card.style.color = '#005bb5';  // 글자 색상 변경
-                    card.style.fontWeight = 'bold';  // 글자 두껍게
-                }
-    
-                card.innerHTML = `
-                    <img src="${player.image}" alt="${player.player}'s image">
-                    <div class="hover-info">
-                        <p><strong> ${player.clusterName}</strong></p>
-                        <p><strong>Efficiency:</strong> ${player.efficiency}</p>
-                        <p><strong>2nd Stat:</strong> ${player.secondStat}</p>
-                        <p><strong>비고:</strong> ${faPlayers.includes(player.player) ? 'FA' : ''}</p> <!-- FA 비고 추가 -->
-                    </div>
-                    <div class="info">
-                        <h3>${player.player}</h3>
-                        <p>${player.team}</p>
-                        <p>${player.clusterName}</p>
-                    </div>
-                `;
-                cardsContainer.appendChild(card);
-            });
-        }
 
         // CSV 파일을 로드하여 HTML 카드 형식으로 표시하는 함수
         function loadCSV() {
@@ -308,7 +206,104 @@
                 })
                 .catch(error => console.error('Error loading CSV:', error));
         }
-    
+
+        // 필터 드롭다운을 업데이트하는 함수
+        function updateFilters(data) {
+            const teamSelect = document.getElementById('teamFilter');
+            const clusterSelect = document.getElementById('clusterFilter');
+
+            // 팀 필터 옵션 추가
+            const teams = [...new Set(data.map(player => player.team))];
+            teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                teamSelect.appendChild(option);
+            });
+
+            // 클러스터 필터 옵션 추가
+            const clusters = [...new Set(data.map(player => player.clusterName))];
+            clusters.forEach(cluster => {
+                const option = document.createElement('option');
+                option.value = cluster;
+                option.textContent = cluster;
+                clusterSelect.appendChild(option);
+            });
+        }
+
+        // FA 필터 적용
+        function filterData() {
+            const teamFilterValue = document.getElementById('teamFilter').value;
+            const clusterFilterValue = document.getElementById('clusterFilter').value;
+        
+            let filteredData = playersData;
+        
+            // FA 필터가 활성화된 경우 FA 선수들만 필터링
+            if (faFilterActive) {
+                filteredData = filteredData.filter(player => faPlayers.includes(player.player));
+            }
+
+            // 팀 필터와 클러스터 필터 적용
+            if (teamFilterValue) {
+                filteredData = filteredData.filter(player => player.team === teamFilterValue);
+            }
+
+            if (clusterFilterValue) {
+                filteredData = filteredData.filter(player => player.clusterName === clusterFilterValue);
+            }
+
+            renderCards(filteredData);
+        }
+
+        // FA 필터 활성화/비활성화
+        document.getElementById('faFilterCheckbox').addEventListener('change', function() {
+            faFilterActive = this.checked;
+            filterData();
+        });
+
+        // 필터 변경 시 카드 갱신
+        document.getElementById('teamFilter').addEventListener('change', filterData);
+        document.getElementById('clusterFilter').addEventListener('change', filterData);
+
+        // 카드 렌더링 함수
+        function renderCards(data) {
+            const cardsContainer = document.getElementById('cardsContainer');
+            cardsContainer.innerHTML = '';  // 기존 카드 내용 지우기
+        
+            data.forEach(player => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+        
+                // FA 선수라면 카드 테두리 색상 변경
+                if (faPlayers.includes(player.player)) {
+                    card.style.border = '3px solid #0066cc';  // 파란색 테두리
+                }
+        
+                // 특정 선수들에 대해 카드 전체 배경을 황금빛으로 설정
+                const isGoldenGlow = goldenGlowPlayers.includes(player.player);
+                if (isGoldenGlow) {
+                    card.style.color = '#005bb5';  // 글자 색상 변경
+                    card.style.fontWeight = 'bold';  // 글자 두껍게
+                }
+        
+                card.innerHTML = `
+                    <img src="${player.image}" alt="${player.player}'s image">
+                    <div class="hover-info">
+                        <p><strong> ${player.clusterName}</strong></p>
+                        <p><strong>Efficiency:</strong> ${player.efficiency}</p>
+                        <p><strong>2nd Stat:</strong> ${player.secondStat}</p>
+                        <p><strong>비고:</strong> ${faPlayers.includes(player.player) ? 'FA' : ''}</p> <!-- FA 비고 추가 -->
+                    </div>
+                    <div class="info">
+                        <h3>${player.player}</h3>
+                        <p>${player.team}</p>
+                        <p>${player.clusterName}</p>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+
         // 페이지가 로드되면 CSV 파일을 로드하고 카드로 표시
         window.onload = function() {
             loadCSV();
