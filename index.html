@@ -195,20 +195,52 @@
     
         // 효율성 기준 정렬 함수
         function sortByEfficiency() {
-            playersData.sort((a, b) => sortedByEfficiencyAsc ? a.efficiency - b.efficiency : b.efficiency - a.efficiency);
-            sortedByEfficiencyAsc = !sortedByEfficiencyAsc; // 정렬 방향 변경
-            // 화살표 변경
+            let filteredData = playersData;
+            
+            // 필터 적용
+            if (faFilterActive) {
+                filteredData = filteredData.filter(player => faPlayers.includes(player.player));
+            }
+            const teamFilterValue = document.getElementById('teamFilter').value;
+            if (teamFilterValue) {
+                filteredData = filteredData.filter(player => player.team === teamFilterValue);
+            }
+            const clusterFilterValue = document.getElementById('clusterFilter').value;
+            if (clusterFilterValue) {
+                filteredData = filteredData.filter(player => player.clusterName === clusterFilterValue);
+            }
+            
+            // 정렬
+            filteredData.sort((a, b) => sortedByEfficiencyAsc ? a.efficiency - b.efficiency : b.efficiency - a.efficiency);
+            sortedByEfficiencyAsc = !sortedByEfficiencyAsc;
             document.getElementById('efficiencyArrow').textContent = sortedByEfficiencyAsc ? '↑' : '↓';
-            renderCards(playersData);
+            renderCards(filteredData);
+
         }
     
         // 2nd Stat 기준 정렬 함수
         function sortBySecondStat() {
-            playersData.sort((a, b) => sortedBySecondStatAsc ? a.secondStat - b.secondStat : b.secondStat - a.secondStat);
-            sortedBySecondStatAsc = !sortedBySecondStatAsc; // 정렬 방향 변경
-            // 화살표 변경
+            let filteredData = playersData;
+            
+            // 필터 적용
+            if (faFilterActive) {
+                filteredData = filteredData.filter(player => faPlayers.includes(player.player));
+            }
+            const teamFilterValue = document.getElementById('teamFilter').value;
+            if (teamFilterValue) {
+                filteredData = filteredData.filter(player => player.team === teamFilterValue);
+            }
+            const clusterFilterValue = document.getElementById('clusterFilter').value;
+            if (clusterFilterValue) {
+                filteredData = filteredData.filter(player => player.clusterName === clusterFilterValue);
+            }
+            
+            // 정렬
+            filteredData.sort((a, b) => sortedBySecondStatAsc ? a.secondStat - b.secondStat : b.secondStat - a.secondStat);
+            sortedBySecondStatAsc = !sortedBySecondStatAsc;
             document.getElementById('secondStatArrow').textContent = sortedBySecondStatAsc ? '↑' : '↓';
-            renderCards(playersData);
+            renderCards(filteredData);
+
         }
         function checkFAPlayers() {
             const missingFAPlayers = faPlayers.filter(faPlayer => {
